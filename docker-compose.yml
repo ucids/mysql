@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:latest
+    container_name: mysql_server
+    command: --default-authentication-plugin=caching_sha2_password
+    restart: always
+    environment:
+      TZ: America/Tijuana
+      MYSQL_ROOT_PASSWORD: Airbook140$
+    ports:
+      - "5200:3306"
+    volumes:
+      - my_db_data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - katzkin-net
+
+  db_backup:
+    image: debian:bullseye-slim
+    volumes:
+      - ./backups:/backups
+      - ./backup_script.sh:/backup_script.sh
+    depends_on:
+      - mysql
+    environment:
+      TZ: America/Tijuana
+      MYSQL_ROOT_PASSWORD: Airbook140$
+      MYSQL_HOST: mysql
+    networks:
+        - katzkin-net
+    command: /bin/bash -c "apt-get update && apt-get install -y default-mysql-client && chmod +x /backup_script.sh && sleep 30 && /backup_script.sh"
+
+
+volumes:
+  my_db_data:
+
+networks:
+  katzkin-net:
+    external: true
